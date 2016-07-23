@@ -16,6 +16,8 @@ const COLOR_DARK_GROUND: Color = Color { r: 50, g: 50, b: 150 };
 
 type Map = Vec<Vec<Tile>>;
 
+
+/// A rectangle on the map, used to characterise the room.
 #[derive(Clone, Copy, Debug)]
 struct Tile {
     blocked: bool,
@@ -33,7 +35,9 @@ impl Tile {
 }
 
 
-
+/// Generic object: the player, monster, item, etc.
+/// Represented by a character on the screen
+#[derive(Debug)]
 struct Object {
     x: i32,
     y: i32,
@@ -51,10 +55,12 @@ impl Object {
         }
     }
 
-    pub fn move_by(&mut self, dx: i32, dy: i32) {
-        // move by the given amount
-        self.x += dx;
-        self.y += dy;
+    /// move by the given amount
+    pub fn move_by(&mut self, dx: i32, dy: i32, map: &Map) {
+        if !map[(self.x + dx) as usize][(self.y + dy) as usize].blocked {
+            self.x += dx;
+            self.y += dy;
+        }
     }
 
     /// Set the color and then draw the character that represents this abject at its position
@@ -105,7 +111,7 @@ fn render_all(root: &mut Root, con: &mut Offscreen, objects: &[Object], map: &Ma
 }
 
 
-fn handle_keys(root: &mut Root, player: &mut Object) -> bool {
+fn handle_keys(root: &mut Root, player: &mut Object, map: &Map) -> bool {
 
     use tcod::input::Key;
     use tcod::input::KeyCode::*;
@@ -121,10 +127,10 @@ fn handle_keys(root: &mut Root, player: &mut Object) -> bool {
         Key { code: Escape, .. } => return true,
 
         // movement keys
-        Key { code: Up, .. } => player.move_by(0, -1),
-        Key { code: Down, .. } => player.move_by(0, 1),
-        Key { code: Left, .. } => player.move_by(-1, 0),
-        Key { code: Right, .. } => player.move_by(1, 0),
+        Key { code: Up, .. } => player.move_by(0, -1, map),
+        Key { code: Down, .. } => player.move_by(0, 1, map),
+        Key { code: Left, .. } => player.move_by(-1, 0, map),
+        Key { code: Right, .. } => player.move_by(1, 0, map),
 
         _ => {},
     }
@@ -169,7 +175,7 @@ fn main() {
 
         // handle keys and exit game if needed
         let player = &mut objects[0];
-        let exit = handle_keys(&mut root, player);
+        let exit = handle_keys(&mut root, player, &map);
         if exit {
             break
         }
